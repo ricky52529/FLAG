@@ -1,0 +1,31 @@
+<!DOCTYPE html> 
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0, minimum-scale=1.0,user-scalable=no"> 
+<title>Your FLAG Game</title> 
+
+<style type="text/css">
+	html{width:100%; height:100%;background-color:#000;}
+	body{width:100%;height:100%;margin:0px auto;padding:0px;overflow:hidden;font-size:100px;}
+	#game{position:relative;top:0px;height:inherit;overflow:hidden;}
+	#gui{position:absolute;top:0px;width:100%;height:100%;overflow:hidden;}
+	#glass{position:absolute;top:0px;width:100%;height:100%;overflow:hidden;pointer-events:none;}
+</style>
+
+<script type="text/javascript" src="js/POLE.js"></script>
+<script type="text/javascript" src="js/FLAG.js"></script>
+<script type="text/javascript" src="js/GAME.js"></script> 
+
+</head> 
+
+<body> 
+
+	<div id="game">
+		<canvas id="canvas"></canvas>
+		<div id="gui"></div><!--optional-->
+		<div id="glass"></div> <!--optional-->
+	</div>
+	
+</body> 
+
+</html> 
