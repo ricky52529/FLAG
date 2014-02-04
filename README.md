@@ -7,4 +7,4 @@ Included in this package is a game.html file which contains the basic set up for
 
 Also included in the package is a js folder which contains three JavaScript files including FLAG.js, the FLAG Game Engine code, GAME.js, a place to write your game logic, and POLE.js, the file that will contain the POLE object created using the POLE editor. All three of these scripts are imported by the game.html file. You can use the local copy of FLAG.js included in this package or you can use http://www.flagamengine.com/FLAG/FLAG.js as the url.
 
-The POLE.js file included in this package is blank. It should be so let's replace a POLE.js that you create using the POLE editor.
+The POLE.js file included in this package is blank. It should be replaced by a POLE.js that you create using the POLE editor.
