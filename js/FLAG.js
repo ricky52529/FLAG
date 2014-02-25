@@ -6881,6 +6881,428 @@ FLAGTILESPRITE.prototype.stop = function(){
 
 
 
+//FLAGWIND
+//------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------
+
+function FLAGWIND(){
+	this.metrics = [];
+	this.events = [];
+	this.Player = {
+		metrics:[],
+		history:[]
+	};
+}
+
+FLAGWIND.prototype.initPlayer = function(){
+
+	this.Player.metrics = [];
+	this.Player.history = [];
+
+	//count the number of metrics
+	var numMetrics = this.metrics.length;
+	
+	//initialize all Player's metrics
+	for(var m=0;m<numMetrics;m++){
+		this.Player.metrics.push({
+			name:this.metrics[m].name,
+			value:Number(this.metrics[m].value)
+		});
+		
+		//are there extras?
+		if(this.metrics[m].extras != undefined){
+			
+			//are the extras an object
+			if(typeof this.metrics[m].extras == "object"){
+			
+				//makes a clone of the object
+				this.Player.metrics[m].extras = JSON.parse(JSON.stringify(this.metrics[m].extras));
+			
+			}else{
+		
+				//are the extras a number
+				if(isNaN(this.metrics[m].extras) != true){
+				
+					this.Player.metrics[m].extras = Number(this.metrics[m].extras);
+			
+				//must be a string then
+				}else{
+			
+					this.Player.metrics[m].extras = String(this.metrics[m].extras);
+				}
+			}
+		}
+	}
+}
+
+FLAGWIND.prototype.rerunHistory = function(history){		
+	//reset the Player's data
+	this.initPlayer();
+	
+	var lengthOfHistory = history.length;	
+	//run every event in history
+	for(var h=0;h<lengthOfHistory;h++){			
+		
+		//run recurring effects from previous turns
+		this.applyRecurringEffects();
+
+		//run the new event
+		this.applyEffects({evt:history[h].evt,opt:history[h].opt,turn:h,otr:0});
+
+		//add the new event to the history
+		this.Player.history.push({evt:history[h].evt,opt:history[h].opt,extras:history[h].extras});	
+	}	
+}
+
+FLAGWIND.prototype.runEvent = function(p){
+	
+	if(p.evt != undefined){
+	
+		//is there an option, for multiple choice events, default 0, first option
+		if(p.opt == undefined){p.opt = 0;};
+		
+		this.checkRepeatLimit(p);
+		
+	}
+}
+
+
+FLAGWIND.prototype.checkRepeatLimit = function(p){
+
+	//no repeat limit
+	if(this.events[p.evt].repeatLimit == undefined){
+	
+		this.checkPrerequisite(p);
+	
+	}else{
+		var eventRepeatLimit = this.events[p.evt].repeatLimit;
+		var numTurns = this.Player.history.length;
+		var numEventOccured = 0;
+		if(numTurns > 0 && eventRepeatLimit > 0){
+			for(var e=0;e<numTurns;e++){
+				if(this.Player.history[e].evt == p.evt){
+					numEventOccured += 1;
+		};};};
+	
+		if(numEventOccured < eventRepeatLimit || eventRepeatLimit == 0){
+	
+			this.checkPrerequisite(p);
+		
+		}else{
+	
+			console.log("The repeat limit for this event has been reached");
+		}
+	}
+};
+
+
+FLAGWIND.prototype.checkPrerequisite = function(p){
+	
+	//no prerequisites
+	if(this.events[p.evt].prerequisites == undefined){
+	
+		//run recurring effects from previous turns
+		this.applyRecurringEffects();
+	
+		//run the new event
+		var turn = this.Player.history.length;
+		this.applyEffects({evt:p.evt,opt:p.opt,turn:turn,otr:0});
+		
+		//are there extras?
+		if(p.extras == undefined){p.extras = null};
+	
+		//add the new event to the history
+		this.Player.history.push({evt:p.evt,opt:p.opt,extras:p.extras});	
+			
+	}else{
+	
+		var numPrerequisites = this.events[p.evt].prerequisites.length;
+		
+		//0 if not met, 1 if met
+		var prerequisitesMet = [];
+		for(var pre=0;pre<numPrerequisites;pre++){
+			prerequisitesMet.push(0);
+		}
+		
+		var numTurns = this.Player.history.length;
+		for(var e=0;e<numTurns;e++){
+			for(var pre=0;pre<numPrerequisites;pre++){
+				if(this.Player.history[e].evt == this.events[p.evt].prerequisites[pre]){
+					prerequisitesMet[pre] = 1;
+		};};};
+	
+		var arePrerequisitesMet = true;
+		for(var pre=0;pre<numPrerequisites;pre++){
+			if(prerequisitesMet[pre] == 0){
+				arePrerequisitesMet = false;
+		};};
+	
+		if(arePrerequisitesMet == true){
+	
+			//run recurring effects from previous turns
+			this.applyRecurringEffects();
+		
+			//run the new event
+			var turn = this.Player.history.length;
+			this.applyEffects({evt:p.evt,opt:p.opt,turn:turn,otr:0});
+			
+			//are there extras?
+			if(p.extras == undefined){p.extras = null};
+		
+			//add the new event to the history
+			this.Player.history.push({evt:p.evt,opt:p.opt,extras:p.extras});	
+		
+		}else{
+	
+			console.log("The prerequisites for this event have not been met");
+		}
+	}
+};
+
+FLAGWIND.prototype.applyRecurringEffects = function(){
+	var numTurns = this.Player.history.length;
+	if(numTurns > 0){
+		for(var t=0;t<numTurns;t++){
+			this.applyEffects({evt:this.Player.history[t].evt,opt:this.Player.history[t].opt,turn:t,otr:1});
+			//change numTurns to e to use past byTurn values instead of current
+		}
+	}
+};
+
+FLAGWIND.prototype.applyEffects = function(p){
+
+	var numMetrics = this.metrics.length;
+	
+	//holds the array(s) that will effect the metrics
+	var effectsArrays = [];
+	
+	//only used to hold the two values for slider events
+	var values = [];
+	
+	//TYPE OF EVENT AND WHICH OPTION
+	switch(this.events[p.evt].type){
+	
+		//happenstance
+		//there is only one possible overall effect, so the index is 0
+		case 0:
+			//one time
+			if(p.otr == 0){
+				effectsArrays = [this.events[p.evt].effects[0].ot];
+			//recurring
+			}else if(p.otr == 1){
+				effectsArrays = [this.events[p.evt].effects[0].r];
+			};
+			break;
+			
+		//multiple choice
+		//there are any number of possible overall effects, so we use index of p.opt
+		case 1:
+			//one time
+			if(p.otr == 0){
+				//which option
+				effectsArrays = [this.events[p.evt].effects[p.opt].ot];
+			//recurring
+			}else if(p.otr == 1){
+				//which option
+				effectsArrays = [this.events[p.evt].effects[p.opt].r];
+			};
+			break;
+			
+		//slider
+		//there is two possible overall effects, so we must include the indexes 0 and 1
+		case 2:
+			//one time
+			if(p.otr == 0){
+				//need both effects
+				effectsArrays = [this.events[p.evt].effects[0].ot,this.events[p.evt].effects[1].ot];
+			//recurring
+			}else if(p.otr == 1){
+				//need both effects
+				effectsArrays = [this.events[p.evt].effects[0].r,this.events[p.evt].effects[1].r];
+			};
+			
+			values.push(this.events[p.evt].effects[0].value);
+			values.push(this.events[p.evt].effects[1].value);
+			break;		
+	};
+	
+	//hold temp vallues for the metrics
+	var tempValues = [];
+	for(var m=0;m<numMetrics;m++){
+	
+		//byTurn
+		if(this.Player.metrics[m].extras != undefined && this.Player.metrics[m].extras.byTurn != undefined && this.Player.metrics[m].extras.byTurn.length > 0){
+		
+			var lengthOfByTurn = this.Player.metrics[m].extras.byTurn.length;
+			
+			//if there is not enough values in the byTurn
+			if(lengthOfByTurn <= p.turn){
+			
+				//use the last value in the byTurn
+				this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[lengthOfByTurn-1]);
+				
+			}else{
+				this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[p.turn]);
+			}
+		}
+		
+		tempValues.push({A:this.Player.metrics[m].value, B:this.Player.metrics[m].value, range:0});
+	};		
+	
+	
+	
+	//APPLY EFFECTS to TEMP VALUES
+	//-----------------------------------------------------------------------------
+	
+	var numEffectsArrays = effectsArrays.length;
+	
+	//loop through the effectsArrays
+	//happenstance and multiple choice events will have only one effectsArray
+	//slider events will have two, so the range of effects can be calculated
+	for(var ea = 0; ea<numEffectsArrays; ea++){
+	
+		//get the number of effects
+		if(effectsArrays[ea] != null){var numEffects = effectsArrays[ea].length;}else{numEffects = 0;};
+		
+		//loop through each effect
+		for(var e=0;e<numEffects;e++){
+				
+			//effects
+			//[0 - metric, 1 - sign, 2 - type, 3 - value]
+		
+			//the effect type, num or metric
+			switch(effectsArrays[ea][e][2]){
+			
+				//metric
+				case 0:
+					//if using the first effectsArray
+					//as in happenstance and multiple choice events
+					//since there is only one effectsArray in those cases
+					if(ea == 0){
+						
+						//uses a metric value for the effects
+						theEffect = Number(tempValues[effectsArrays[ea][e][3]].A);
+						
+					//if using the second effectsArray
+					//as in slider events
+					}else if(ea == 1){
+					
+						theEffect = Number(tempValues[effectsArrays[ea][e][3]].B);
+						
+					};
+					break;	
+				
+				//number
+				case 1:
+					var theEffect = Number(effectsArrays[ea][e][3]);
+					break;
+					
+				//diminisher	
+				case 2:
+					var timeEventOccured = 0;
+					var numTurns = this.Player.history.length;
+					if(numTurns > 0){
+						for(var t=0;t<numTurns;t++){
+							if(this.Player.history[t].evt == p.evt){
+								timeEventOccured += 1;
+					};};}; 
+					theEffect = Number(effectsArrays[ea][e][3]) * timeEventOccured;
+					break;
+			};
+			
+			//apply the effect to tempValues 
+			switch(effectsArrays[ea][e][1]){
+				case "=":
+					if(ea == 0){tempValues[effectsArrays[ea][e][0]].A = theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B = theEffect};
+					break;
+				case "+":
+					if(ea == 0){tempValues[effectsArrays[ea][e][0]].A += theEffect;}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B += theEffect};
+					break;
+				case "-":
+					if(ea == 0){tempValues[effectsArrays[ea][e][0]].A -= theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B -= theEffect};
+					break;
+				case "*":
+					if(ea == 0){tempValues[effectsArrays[ea][e][0]].A *= theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B *= theEffect};
+					break;
+				case "/":
+					if(ea == 0){tempValues[effectsArrays[ea][e][0]].A /= theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B /= theEffect};
+					break;
+			}
+		}
+	
+	}
+
+	//-----------------------------------------------------------------------------
+	//END EFFECTS to TEMP VALUES
+	
+	
+	//APPLY EFFECTS to PLAYER METRICS
+	//-----------------------------------------------------------------------------
+	
+	//FOR HAPPENSTANCE AND MULTIPLE CHOICE EVENTS
+	if(this.events[p.evt].type == 0 || this.events[p.evt].type == 1){	
+		
+		for(var m=0;m<numMetrics;m++){
+		
+			//byTurn
+			//check if there is a byTurn value for the metric
+			if(this.Player.metrics[m].extras != undefined && this.Player.metrics[m].extras.byTurn != undefined && this.Player.metrics[m].extras.byTurn.length > 0){
+			
+				//if so get the change 
+				var changeInMetric = tempValues[m].A - this.Player.metrics[m].value;
+				var byTurnLength = this.Player.metrics[m].extras.byTurn.length;
+				for(var bt=p.turn;bt<byTurnLength;bt++){
+				
+					//apply the change to the rest of the future turns
+					this.Player.metrics[m].extras.byTurn[bt] += changeInMetric;
+				}
+			}
+			
+			//effect to the player's metric
+			this.Player.metrics[m].value = tempValues[m].A;
+		};	
+		
+	//FOR SLIDER EVENTS
+	}else if(this.events[p.evt].type == 2){
+	
+		//get percentage of slide
+		var range = values[1] - values[0];
+		
+		//in a slider event the p.opt will be a number between the two values
+		//where the slider was positioned
+		var slideValueFromAValue = p.opt - values[0];		
+		var percentageOfSlide = Math.round(((slideValueFromAValue*100)/range));
+		
+		for(var m=0;m<numMetrics;m++){
+			//get the range between the A and B effects
+			tempValues[m].range = tempValues[m].B - tempValues[m].A;
+			//get the percentage
+			tempValues[m].range = (tempValues[m].range * (percentageOfSlide/100));
+			
+			//byTurn
+			//check if there is a byTurn value for the metric
+			if(this.Player.metrics[m].extras != undefined && this.Player.metrics[m].extras.byTurn != undefined && this.Player.metrics[m].extras.byTurn.length > 0){
+				//if so get the change 
+				var changeInMetric = tempValues[m].range;
+				var byTurnLength = this.Player.metrics[m].byTurn.length;
+				for(var bt=p.turn;bt<byTurnLength;bt++){
+					//apply the change to the rest of the future turns
+					this.Player.metrics[m].extras.byTurn[bt] += changeInMetric;
+			};};
+			//effect to the player's metric
+			this.Player.metrics[m].value += tempValues[m].range;
+		}
+	}
+	
+	//-----------------------------------------------------------------------------
+	//END EFFECTS to PLAYER METRICS
+}
+//------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------
+//END FLAGWIND
+
+
+
 //FLAG INITIALIZE
 //------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------
@@ -6909,6 +7331,20 @@ window.onload = function(){
 	
 	//--------------------------------------
 	//END DOM INITIALIZE
+	
+	//WIND OBJECT INITIALIZE
+	//--------------------------------------
+	if(window['WIND'] == undefined){
+		WIND = new FLAGWIND();
+	}else{
+		var tempWIND = new FLAGWIND();
+		tempWIND.metrics = WIND.metrics;
+		tempWIND.events = WIND.events;
+		WIND = tempWIND;
+		tempWIND = null;
+	}
+	//--------------------------------------
+	//END WIND OBJECT INITIALIZE
 	
 	//FLAG OBJECT INITIALIZE
 	//--------------------------------------
