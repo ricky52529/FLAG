@@ -4,8 +4,8 @@
 FLAG Game Engine - FLAG.js
 Author: Zac Zidik
 URL: www.flagamengine.com
-version 3.0.11
-updated 1/29/2014
+version 3.0.12
+updated 2/26/2014
 
 This is the engine code for the FLAG Game Engine. You can use this file locally,
 on your server, or the most up to date version at www.flagamengine.com/FLAG/FLAG.js
@@ -6944,10 +6944,19 @@ FLAGWIND.prototype.rerunHistory = function(history){
 	for(var h=0;h<lengthOfHistory;h++){			
 		
 		//run recurring effects from previous turns
-		this.applyRecurringEffects();
-
-		//run the new event
-		this.applyEffects({evt:history[h].evt,opt:history[h].opt,turn:h,otr:0});
+		this.applyRecurringEffects();		
+		
+		//is the event a multiple selection, and therefore have multiple effects
+		if(this.events[history[h].evt].type == 2){
+			var numEffects = history[h].opt.length;
+			for(var o=0;o<numEffects;o++){
+				//run the new event
+				this.applyEffects({evt:history[h].evt,opt:history[h].opt[o],turn:h,otr:0});
+			}
+		}else{
+			//run the new event
+			this.applyEffects({evt:history[h].evt,opt:history[h].opt,turn:h,otr:0});
+		}
 
 		//add the new event to the history
 		this.Player.history.push({evt:history[h].evt,opt:history[h].opt,extras:history[h].extras});	
@@ -7006,13 +7015,19 @@ FLAGWIND.prototype.checkPrerequisite = function(p){
 	
 		//run the new event
 		var turn = this.Player.history.length;
-		this.applyEffects({evt:p.evt,opt:p.opt,turn:turn,otr:0});
 		
-		//are there extras?
-		if(p.extras == undefined){p.extras = null};
+		//is the event a multiple selection, and therefore have multiple effects
+		if(this.events[p.evt].type == 2){
+			var numEffects = p.opt.length;
+			for(var o=0;o<numEffects;o++){
+				this.applyEffects({evt:p.evt,opt:p.opt[o],turn:turn,otr:0});
+			}
+		}else{
+			this.applyEffects({evt:p.evt,opt:p.opt,turn:turn,otr:0});
+		}
 	
 		//add the new event to the history
-		this.Player.history.push({evt:p.evt,opt:p.opt,extras:p.extras});	
+		this.Player.history.push({evt:p.evt,opt:p.opt});	
 			
 	}else{
 	
@@ -7044,13 +7059,19 @@ FLAGWIND.prototype.checkPrerequisite = function(p){
 		
 			//run the new event
 			var turn = this.Player.history.length;
-			this.applyEffects({evt:p.evt,opt:p.opt,turn:turn,otr:0});
 			
-			//are there extras?
-			if(p.extras == undefined){p.extras = null};
+			//is the event a multiple selection, and therefore have multiple effects
+			if(this.events[p.evt].type == 2){
+				var numEffects = p.opt.length;
+				for(var o=0;o<numEffects;o++){
+					this.applyEffects({evt:p.evt,opt:p.opt[o],turn:turn,otr:0});
+				}
+			}else{
+				this.applyEffects({evt:p.evt,opt:p.opt,turn:turn,otr:0});
+			}
 		
 			//add the new event to the history
-			this.Player.history.push({evt:p.evt,opt:p.opt,extras:p.extras});	
+			this.Player.history.push({evt:p.evt,opt:p.opt});	
 		
 		}else{
 	
@@ -7063,8 +7084,15 @@ FLAGWIND.prototype.applyRecurringEffects = function(){
 	var numTurns = this.Player.history.length;
 	if(numTurns > 0){
 		for(var t=0;t<numTurns;t++){
-			this.applyEffects({evt:this.Player.history[t].evt,opt:this.Player.history[t].opt,turn:t,otr:1});
-			//change numTurns to e to use past byTurn values instead of current
+			//is the event a multiple selection, and therefore have multiple effects
+			if(this.events[this.Player.history[t].evt].type == 2){
+				var numEffects = this.Player.history[t].opt.length;
+				for(var o=0;o<numEffects;o++){
+					this.applyEffects({evt:this.Player.history[t].evt,opt:this.Player.history[t].opt[o],turn:t,otr:1});
+				}
+			}else{
+				this.applyEffects({evt:this.Player.history[t].evt,opt:this.Player.history[t].opt,turn:t,otr:1});
+			}			
 		}
 	}
 };
@@ -7108,9 +7136,23 @@ FLAGWIND.prototype.applyEffects = function(p){
 			};
 			break;
 			
+		//multiple selection
+		//there are any number of possible overall effects, so we use index of p.opt
+		case 2:
+			//one time
+			if(p.otr == 0){
+				//which option
+				effectsArrays = [this.events[p.evt].effects[p.opt].ot];
+			//recurring
+			}else if(p.otr == 1){
+				//which option
+				effectsArrays = [this.events[p.evt].effects[p.opt].r];
+			};
+			break;
+			
 		//slider
 		//there is two possible overall effects, so we must include the indexes 0 and 1
-		case 2:
+		case 3:
 			//one time
 			if(p.otr == 0){
 				//need both effects
@@ -7138,8 +7180,19 @@ FLAGWIND.prototype.applyEffects = function(p){
 			//if there is not enough values in the byTurn
 			if(lengthOfByTurn <= p.turn){
 			
-				//use the last value in the byTurn
-				this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[lengthOfByTurn-1]);
+				//is byTurn set to loop
+				if(this.Player.metrics[m].extras.byTurnLoop != undefined && this.Player.metrics[m].extras.byTurnLoop == true){
+				
+					//loop back around to get value
+					var turnValue = p.turn%lengthOfByTurn;
+					this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[turnValue]);
+					
+				}else{
+			
+					//use the last value in the byTurn
+					this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[lengthOfByTurn-1]);
+				
+				}
 				
 			}else{
 				this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[p.turn]);
@@ -7239,8 +7292,8 @@ FLAGWIND.prototype.applyEffects = function(p){
 	//APPLY EFFECTS to PLAYER METRICS
 	//-----------------------------------------------------------------------------
 	
-	//FOR HAPPENSTANCE AND MULTIPLE CHOICE EVENTS
-	if(this.events[p.evt].type == 0 || this.events[p.evt].type == 1){	
+	//FOR HAPPENSTANCE, MULTIPLE CHOICE and MULTIPLE SELECTION EVENTS
+	if(this.events[p.evt].type == 0 || this.events[p.evt].type == 1 || this.events[p.evt].type == 2){	
 		
 		for(var m=0;m<numMetrics;m++){
 		
@@ -7263,7 +7316,7 @@ FLAGWIND.prototype.applyEffects = function(p){
 		};	
 		
 	//FOR SLIDER EVENTS
-	}else if(this.events[p.evt].type == 2){
+	}else if(this.events[p.evt].type == 3){
 	
 		//get percentage of slide
 		var range = values[1] - values[0];
@@ -7338,8 +7391,8 @@ window.onload = function(){
 		WIND = new FLAGWIND();
 	}else{
 		var tempWIND = new FLAGWIND();
-		tempWIND.metrics = WIND.metrics;
-		tempWIND.events = WIND.events;
+		if(WIND.metrics != undefined){tempWIND.metrics = WIND.metrics;};
+		if(WIND.events != undefined){tempWIND.events = WIND.events;};
 		WIND = tempWIND;
 		tempWIND = null;
 	}
