@@ -6882,6 +6882,8 @@ FLAGTILESPRITE.prototype.stop = function(){
 
 
 //FLAGWIND
+//Constructor for the FLAGWIND class
+//adds methods to existing WIND objects
 //------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------
 
@@ -6967,7 +6969,7 @@ FLAGWIND.prototype.runEvent = function(p){
 	
 	if(p.evt != undefined){
 	
-		//is there an option, for multiple choice events, default 0, first option
+		//is there an option?
 		if(p.opt == undefined){p.opt = 0;};
 		
 		this.checkRepeatLimit(p);
@@ -7250,7 +7252,7 @@ FLAGWIND.prototype.applyEffects = function(p){
 					var theEffect = Number(effectsArrays[ea][e][3]);
 					break;
 					
-				//diminisher	
+				//compound	
 				case 2:
 					var timeEventOccured = 0;
 					var numTurns = this.Player.history.length;
