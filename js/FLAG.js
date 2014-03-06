@@ -4,8 +4,8 @@
 FLAG Game Engine - FLAG.js
 Author: Zac Zidik
 URL: www.flagamengine.com
-version 3.0.12
-updated 2/26/2014
+version 3.0.13
+updated 3/6/2014
 
 This is the engine code for the FLAG Game Engine. You can use this file locally,
 on your server, or the most up to date version at www.flagamengine.com/FLAG/FLAG.js
@@ -6890,6 +6890,7 @@ FLAGTILESPRITE.prototype.stop = function(){
 function FLAGWIND(){
 	this.metrics = [];
 	this.events = [];
+	this.eGroups = [];
 	this.Player = {
 		metrics:[],
 		history:[]
@@ -7221,77 +7222,154 @@ FLAGWIND.prototype.applyEffects = function(p){
 		
 		//loop through each effect
 		for(var e=0;e<numEffects;e++){
-				
-			//effects
-			//[0 - metric, 1 - sign, 2 - type, 3 - value]
 		
-			//the effect type, num or metric
-			switch(effectsArrays[ea][e][2]){
+			//is the effect an eGroup
+			if(effectsArrays[ea][e][0] == 'g'){
 			
-				//metric
-				case 0:
-					//if using the first effectsArray
-					//as in happenstance and multiple choice events
-					//since there is only one effectsArray in those cases
-					if(ea == 0){
-						
-						//uses a metric value for the effects
-						theEffect = Number(tempValues[effectsArrays[ea][e][3]].A);
-						
-					//if using the second effectsArray
-					//as in slider events
-					}else if(ea == 1){
-					
-						theEffect = Number(tempValues[effectsArrays[ea][e][3]].B);
-						
-					};
-					break;	
+				//eGroups
+				//[0 - g, 1 - eGroup Index]
+				var eGroupNum = effectsArrays[ea][e][1];
+				var num_eGroup_Effects = WIND.eGroups[eGroupNum].e.length;
 				
-				//number
-				case 1:
-					var theEffect = Number(effectsArrays[ea][e][3]);
-					break;
+				//got through the effects of the eGroup and apply them to the tempValues
+				for(var ege=0;ege<num_eGroup_Effects;ege++){
+				
+					//effects on metrics
+					//[0 - metric, 1 - sign, 2 - type, 3 - value]			
+		
+					//the effect type, num or metric
+					switch(WIND.eGroups[eGroupNum].e[ege][2]){
+		
+						//metric
+						case 0:
+							//if using the first effectsArray
+							//as in happenstance and multiple choice events
+							//since there is only one effectsArray in those cases
+							if(ea == 0){
 					
-				//compound	
-				case 2:
-					var timeEventOccured = 0;
-					var numTurns = this.Player.history.length;
-					if(numTurns > 0){
-						for(var t=0;t<numTurns;t++){
-							if(this.Player.history[t].evt == p.evt){
-								timeEventOccured += 1;
-					};};}; 
-					theEffect = Number(effectsArrays[ea][e][3]) * timeEventOccured;
-					break;
-			};
+								//uses a metric value for the effects
+								theEffect = Number(tempValues[WIND.eGroups[eGroupNum].e[ege][3]].A);
+					
+							//if using the second effectsArray
+							//as in slider events
+							}else if(ea == 1){
+				
+								theEffect = Number(tempValues[WIND.eGroups[eGroupNum].e[ege][3]].B);
+					
+							};
+							break;	
 			
-			//apply the effect to tempValues 
-			switch(effectsArrays[ea][e][1]){
-				case "=":
-					if(ea == 0){tempValues[effectsArrays[ea][e][0]].A = theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B = theEffect};
-					break;
-				case "+":
-					if(ea == 0){tempValues[effectsArrays[ea][e][0]].A += theEffect;}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B += theEffect};
-					break;
-				case "-":
-					if(ea == 0){tempValues[effectsArrays[ea][e][0]].A -= theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B -= theEffect};
-					break;
-				case "*":
-					if(ea == 0){tempValues[effectsArrays[ea][e][0]].A *= theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B *= theEffect};
-					break;
-				case "/":
-					if(ea == 0){tempValues[effectsArrays[ea][e][0]].A /= theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B /= theEffect};
-					break;
+						//number
+						case 1:
+							var theEffect = Number(WIND.eGroups[eGroupNum].e[ege][3]);
+							break;
+				
+						//compound	
+						case 2:
+							var timeEventOccured = 0;
+							var numTurns = this.Player.history.length;
+							if(numTurns > 0){
+								for(var t=0;t<numTurns;t++){
+									if(this.Player.history[t].evt == p.evt){
+										timeEventOccured += 1;
+							};};}; 
+							theEffect = Number(WIND.eGroups[eGroupNum].e[ege][3]) * timeEventOccured;
+							break;
+					};
+		
+					//apply the effect to tempValues 
+					switch(WIND.eGroups[eGroupNum].e[ege][1]){
+						case "=":
+							if(ea == 0){tempValues[WIND.eGroups[eGroupNum].e[ege][0]].A = theEffect}else if(ea == 1){tempValues[WIND.eGroups[eGroupNum].e[ege][0]].B = theEffect};
+							break;
+						case "+":
+							if(ea == 0){tempValues[WIND.eGroups[eGroupNum].e[ege][0]].A += theEffect;}else if(ea == 1){tempValues[WIND.eGroups[eGroupNum].e[ege][0]].B += theEffect};
+							break;
+						case "-":
+							if(ea == 0){tempValues[WIND.eGroups[eGroupNum].e[ege][0]].A -= theEffect}else if(ea == 1){tempValues[WIND.eGroups[eGroupNum].e[ege][0]].B -= theEffect};
+							break;
+						case "*":
+							if(ea == 0){tempValues[WIND.eGroups[eGroupNum].e[ege][0]].A *= theEffect}else if(ea == 1){tempValues[WIND.eGroups[eGroupNum].e[ege][0]].B *= theEffect};
+							break;
+						case "/":
+							if(ea == 0){tempValues[WIND.eGroups[eGroupNum].e[ege][0]].A /= theEffect}else if(ea == 1){tempValues[WIND.eGroups[eGroupNum].e[ege][0]].B /= theEffect};
+							break;
+					}
+				}
+			
+			//is the effect a direct effect on a metric
+			}else{
+				
+				//effects on metrics
+				//[0 - metric, 1 - sign, 2 - type, 3 - value]			
+			
+				//the effect type, num or metric
+				switch(effectsArrays[ea][e][2]){
+			
+					//metric
+					case 0:
+						//if using the first effectsArray
+						//as in happenstance and multiple choice events
+						//since there is only one effectsArray in those cases
+						if(ea == 0){
+						
+							//uses a metric value for the effects
+							theEffect = Number(tempValues[effectsArrays[ea][e][3]].A);
+						
+						//if using the second effectsArray
+						//as in slider events
+						}else if(ea == 1){
+					
+							theEffect = Number(tempValues[effectsArrays[ea][e][3]].B);
+						
+						};
+						break;	
+				
+					//number
+					case 1:
+						var theEffect = Number(effectsArrays[ea][e][3]);
+						break;
+					
+					//compound	
+					case 2:
+						var timeEventOccured = 0;
+						var numTurns = this.Player.history.length;
+						if(numTurns > 0){
+							for(var t=0;t<numTurns;t++){
+								if(this.Player.history[t].evt == p.evt){
+									timeEventOccured += 1;
+						};};}; 
+						theEffect = Number(effectsArrays[ea][e][3]) * timeEventOccured;
+						break;
+				};
+			
+				//apply the effect to tempValues 
+				switch(effectsArrays[ea][e][1]){
+					case "=":
+						if(ea == 0){tempValues[effectsArrays[ea][e][0]].A = theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B = theEffect};
+						break;
+					case "+":
+						if(ea == 0){tempValues[effectsArrays[ea][e][0]].A += theEffect;}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B += theEffect};
+						break;
+					case "-":
+						if(ea == 0){tempValues[effectsArrays[ea][e][0]].A -= theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B -= theEffect};
+						break;
+					case "*":
+						if(ea == 0){tempValues[effectsArrays[ea][e][0]].A *= theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B *= theEffect};
+						break;
+					case "/":
+						if(ea == 0){tempValues[effectsArrays[ea][e][0]].A /= theEffect}else if(ea == 1){tempValues[effectsArrays[ea][e][0]].B /= theEffect};
+						break;
+				}
 			}
 		}
-	
 	}
 
 	//-----------------------------------------------------------------------------
 	//END EFFECTS to TEMP VALUES
 	
 	
-	//APPLY EFFECTS to PLAYER METRICS
+	//APPLY TEMP VALUES to PLAYER METRICS
 	//-----------------------------------------------------------------------------
 	
 	//FOR HAPPENSTANCE, MULTIPLE CHOICE and MULTIPLE SELECTION EVENTS
@@ -7352,6 +7430,12 @@ FLAGWIND.prototype.applyEffects = function(p){
 	//-----------------------------------------------------------------------------
 	//END EFFECTS to PLAYER METRICS
 }
+
+FLAGWIND.prototype.effectTempValues = function(p, effectsArrays, tempValues){
+
+	return tempValues;
+}
+
 //------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------
 //END FLAGWIND
@@ -7395,6 +7479,7 @@ window.onload = function(){
 		var tempWIND = new FLAGWIND();
 		if(WIND.metrics != undefined){tempWIND.metrics = WIND.metrics;};
 		if(WIND.events != undefined){tempWIND.events = WIND.events;};
+		if(WIND.eGroups != undefined){tempWIND.eGroups = WIND.eGroups;};
 		WIND = tempWIND;
 		tempWIND = null;
 	}
