@@ -4,8 +4,8 @@
 FLAG Game Engine - FLAG.js
 Author: Zac Zidik
 URL: www.flagamengine.com
-version 3.0.13
-updated 3/6/2014
+version 3.0.14
+updated 3/7/2014
 
 This is the engine code for the FLAG Game Engine. You can use this file locally,
 on your server, or the most up to date version at www.flagamengine.com/FLAG/FLAG.js
@@ -6891,6 +6891,7 @@ function FLAGWIND(){
 	this.metrics = [];
 	this.events = [];
 	this.eGroups = [];
+	this.decimals = 2;
 	this.Player = {
 		metrics:[],
 		history:[]
@@ -7385,12 +7386,16 @@ FLAGWIND.prototype.applyEffects = function(p){
 				var changeInMetric = tempValues[m].A - this.Player.metrics[m].value;
 				var byTurnLength = this.Player.metrics[m].extras.byTurn.length;
 				for(var bt=p.turn;bt<byTurnLength;bt++){
-				
+					
+					//set to decimals
+					changeInMetric = Number(changeInMetric.toFixed(this.decimals));
 					//apply the change to the rest of the future turns
 					this.Player.metrics[m].extras.byTurn[bt] += changeInMetric;
 				}
 			}
 			
+			//set to decimals
+			tempValues[m].A = Number(tempValues[m].A.toFixed(this.decimals));
 			//effect to the player's metric
 			this.Player.metrics[m].value = tempValues[m].A;
 		};	
@@ -7419,9 +7424,15 @@ FLAGWIND.prototype.applyEffects = function(p){
 				var changeInMetric = tempValues[m].range;
 				var byTurnLength = this.Player.metrics[m].byTurn.length;
 				for(var bt=p.turn;bt<byTurnLength;bt++){
+				
+					//set to decimals
+					changeInMetric = Number(changeInMetric.toFixed(this.decimals));
 					//apply the change to the rest of the future turns
 					this.Player.metrics[m].extras.byTurn[bt] += changeInMetric;
 			};};
+			
+			//set to decimals
+			tempValues[m].range = Number(tempValues[m].range.toFixed(this.decimals));
 			//effect to the player's metric
 			this.Player.metrics[m].value += tempValues[m].range;
 		}
@@ -7430,12 +7441,6 @@ FLAGWIND.prototype.applyEffects = function(p){
 	//-----------------------------------------------------------------------------
 	//END EFFECTS to PLAYER METRICS
 }
-
-FLAGWIND.prototype.effectTempValues = function(p, effectsArrays, tempValues){
-
-	return tempValues;
-}
-
 //------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------
 //END FLAGWIND
@@ -7480,6 +7485,7 @@ window.onload = function(){
 		if(WIND.metrics != undefined){tempWIND.metrics = WIND.metrics;};
 		if(WIND.events != undefined){tempWIND.events = WIND.events;};
 		if(WIND.eGroups != undefined){tempWIND.eGroups = WIND.eGroups;};
+		if(WIND.decimals != undefined){tempWIND.decimals = WIND.decimals;};
 		WIND = tempWIND;
 		tempWIND = null;
 	}
