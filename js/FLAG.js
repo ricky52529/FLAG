@@ -4,8 +4,8 @@
 FLAG Game Engine - FLAG.js
 Author: Zac Zidik
 URL: www.flagamengine.com
-version 3.0.14
-updated 3/7/2014
+version 3.0.15
+updated 3/11/2014
 
 This is the engine code for the FLAG Game Engine. You can use this file locally,
 on your server, or the most up to date version at www.flagamengine.com/FLAG/FLAG.js
@@ -7422,7 +7422,7 @@ FLAGWIND.prototype.applyEffects = function(p){
 			if(this.Player.metrics[m].extras != undefined && this.Player.metrics[m].extras.byTurn != undefined && this.Player.metrics[m].extras.byTurn.length > 0){
 				//if so get the change 
 				var changeInMetric = tempValues[m].range;
-				var byTurnLength = this.Player.metrics[m].byTurn.length;
+				var byTurnLength = this.Player.metrics[m].extras.byTurn.length;
 				for(var bt=p.turn;bt<byTurnLength;bt++){
 				
 					//set to decimals
