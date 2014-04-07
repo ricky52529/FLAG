@@ -4,7 +4,7 @@
 FLAG Game Engine - FLAG.js
 Author: Zac Zidik
 URL: www.flagamengine.com
-version 3.0.16
+version 3.0.17
 updated 4/7/2014
 
 This is the engine code for the FLAG Game Engine. You can use this file locally,
@@ -7046,9 +7046,33 @@ FLAGWIND.prototype.checkPrerequisite = function(p){
 		var numTurns = this.Player.history.length;
 		for(var e=0;e<numTurns;e++){
 			for(var pre=0;pre<numPrerequisites;pre++){
+				//is the prerequisite event in the history
 				if(this.Player.history[e].evt == this.events[p.evt].prerequisites[pre]){
-					prerequisitesMet[pre] = 1;
-		};};};
+					//does it need to match the amount of times the event itself has happened
+					if(this.events[p.evt].prerequisiteMatchAmounts[pre] == true){
+						var lengthOfHistory = this.Player.history.length;
+						var numTimesEvt = 0;
+						var numTimesPrereq = 0;
+						for(var h=0;h<lengthOfHistory;h++){	
+							if(this.Player.history[h].evt == p.evt){
+								numTimesEvt += 1;
+							}
+							if(this.Player.history[h].evt == this.events[p.evt].prerequisites[pre]){
+								numTimesPrereq += 1;
+							}
+						}
+												
+						if(numTimesEvt < numTimesPrereq){
+							prerequisitesMet[pre] = 1;
+						}
+					
+					//does not need to match amounts
+					}else{
+						prerequisitesMet[pre] = 1;
+					}
+				}
+			}
+		}		
 	
 		var arePrerequisitesMet = true;
 		for(var pre=0;pre<numPrerequisites;pre++){
