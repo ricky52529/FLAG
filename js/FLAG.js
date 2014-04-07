@@ -4,8 +4,8 @@
 FLAG Game Engine - FLAG.js
 Author: Zac Zidik
 URL: www.flagamengine.com
-version 3.0.15
-updated 3/11/2014
+version 3.0.16
+updated 4/7/2014
 
 This is the engine code for the FLAG Game Engine. You can use this file locally,
 on your server, or the most up to date version at www.flagamengine.com/FLAG/FLAG.js
@@ -7232,7 +7232,7 @@ FLAGWIND.prototype.applyEffects = function(p){
 				var eGroupNum = effectsArrays[ea][e][1];
 				var num_eGroup_Effects = WIND.eGroups[eGroupNum].e.length;
 				
-				//got through the effects of the eGroup and apply them to the tempValues
+				//go through the effects of the eGroup and apply them to the tempValues
 				for(var ege=0;ege<num_eGroup_Effects;ege++){
 				
 					//effects on metrics
@@ -7396,8 +7396,19 @@ FLAGWIND.prototype.applyEffects = function(p){
 			
 			//set to decimals
 			tempValues[m].A = Number(tempValues[m].A.toFixed(this.decimals));
-			//effect to the player's metric
-			this.Player.metrics[m].value = tempValues[m].A;
+			
+			//check if the result of the effects makes the metric negative
+			//and if the metric allows negative values
+			if(tempValues[m].A < 0 && this.metrics[m].neg == false){
+				
+				//effect to the player's metric
+				this.Player.metrics[m].value = 0;	
+			
+			}else{
+			
+				//effect to the player's metric
+				this.Player.metrics[m].value = tempValues[m].A;
+			}
 		};	
 		
 	//FOR SLIDER EVENTS
@@ -7412,10 +7423,14 @@ FLAGWIND.prototype.applyEffects = function(p){
 		var percentageOfSlide = Math.round(((slideValueFromAValue*100)/range));
 		
 		for(var m=0;m<numMetrics;m++){
-			//get the range between the A and B effects
-			tempValues[m].range = tempValues[m].B - tempValues[m].A;
-			//get the percentage
-			tempValues[m].range = (tempValues[m].range * (percentageOfSlide/100));
+			//get the range between the A and B effects			
+			var changeFullLeft= tempValues[m].A - this.Player.metrics[m].value;
+			var changeFullRight = tempValues[m].B - this.Player.metrics[m].value;
+			var totalAmountofChange = changeFullRight - changeFullLeft;
+			
+			//the percentage of the slider determines how much of the total amount of change to use
+			//add it to the amount of change that would have happen if the slider was all the way left, in case the change was taking place across zero
+			tempValues[m].range = changeFullLeft + (totalAmountofChange * (percentageOfSlide/100));
 			
 			//byTurn
 			//check if there is a byTurn value for the metric
@@ -7433,8 +7448,20 @@ FLAGWIND.prototype.applyEffects = function(p){
 			
 			//set to decimals
 			tempValues[m].range = Number(tempValues[m].range.toFixed(this.decimals));
-			//effect to the player's metric
-			this.Player.metrics[m].value += tempValues[m].range;
+						
+			//check if the result of the effects makes the metric negative
+			//and if the metric allows negative values
+			var result = Number(this.Player.metrics[m].value + tempValues[m].range);
+			if(result < 0 && this.metrics[m].neg == false){
+			
+				//effect to the player's metric
+				this.Player.metrics[m].value = 0;	
+				
+			}else{
+			
+				//effect to the player's metric
+				this.Player.metrics[m].value += tempValues[m].range;
+			}
 		}
 	}
 	
@@ -7579,9 +7606,6 @@ Object.prototype.hasOwnProperty = function(property) {
 //ASTAR PATHFINDING ALGORITHM
 //------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------
-//var GraphNodeType={OPEN:1,WALL:0};function Graph(a){for(var c=[],b=0;b<a.length;b++){c[b]=[];for(var d=0,e=a[b];d<e.length;d++)c[b][d]=new GraphNode(b,d,e[d])}this.input=a;this.nodes=c}Graph.prototype.toString=function(){for(var a="\n",c=this.nodes,b,d,e,g,f=0,h=c.length;f<h;f++){b="";d=c[f];e=0;for(g=d.length;e<g;e++)b+=d[e].type+" ";a=a+b+"\n"}return a};function GraphNode(a,c,b){this.data={};this.x=a;this.y=c;this.pos={x:a,y:c};this.type=b}GraphNode.prototype.toString=function(){return"["+this.x+" "+this.y+"]"};GraphNode.prototype.isWall=function(){return this.type==GraphNodeType.WALL};function BinaryHeap(a){this.content=[];this.scoreFunction=a}BinaryHeap.prototype={push:function(a){this.content.push(a);this.sinkDown(this.content.length-1)},pop:function(){var a=this.content[0],c=this.content.pop();0<this.content.length&&(this.content[0]=c,this.bubbleUp(0));return a},remove:function(a){var c=this.content.indexOf(a),b=this.content.pop();c!==this.content.length-1&&(this.content[c]=b,this.scoreFunction(b)<this.scoreFunction(a)?this.sinkDown(c):this.bubbleUp(c))},size:function(){return this.content.length},rescoreElement:function(a){this.sinkDown(this.content.indexOf(a))},sinkDown:function(a){for(var c=this.content[a];0<a;){var b=(a+1>>1)-1,d=this.content[b];if(this.scoreFunction(c)<this.scoreFunction(d))this.content[b]=c,this.content[a]=d,a=b;else break}},bubbleUp:function(a){for(var c=this.content.length,b=this.content[a],d=this.scoreFunction(b);;){var e=a+1<<1,g=e-1,f=null;if(g<c){var h=this.scoreFunction(this.content[g]);h<d&&(f=g)}if(e<c&&this.scoreFunction(this.content[e])<(null===f?d:h))f=e;if(null!==f)this.content[a]=this.content[f],this.content[f]=b,a=f;else break}}};
-//var astar={init:function(a){for(var b=0,g=a.length;b<g;b++)for(var d=0,c=a[b].length;d<c;d++){var f=a[b][d];f.f=0;f.g=0;f.h=0;f.cost=f.type;f.visited=!1;f.closed=!1;f.parent=null}},heap:function(){return new BinaryHeap(function(a){return a.f})},search:function(a,b,g,d,c){astar.init(a);var c=c||astar.manhattan,d=!!d,f=astar.heap();for(f.push(b);0<f.size();){b=f.pop();if(b===g){a=b;for(g=[];a.parent;)g.push(a),a=a.parent;return g.reverse()}b.closed=!0;for(var i=astar.neighbors(a,b,d),h=0,l=i.length;h<l;h++){var e=i[h];if(!e.closed&&!e.isWall()){var j=b.g+e.cost,k=e.visited;if(!k||j<e.g)e.visited=!0,e.parent=b,e.h=e.h||c(e.pos,g.pos),e.g=j,e.f=e.g+e.h,k?f.rescoreElement(e):f.push(e)}}}return[]},manhattan:function(a,b){var g=Math.abs(b.x-a.x),d=Math.abs(b.y-a.y);return g+d},neighbors:function(a,b,g){var d=[],c=b.x,b=b.y;a[c-1]&&a[c-1][b]&&d.push(a[c-1][b]);a[c+1]&&a[c+1][b]&&d.push(a[c+1][b]);a[c]&&a[c][b-1]&&d.push(a[c][b-1]);a[c]&&a[c][b+1]&&d.push(a[c][b+1]);g&&(a[c-1]&&a[c-1][b-1]&&d.push(a[c-1][b-1]),a[c+1]&&a[c+1][b-1]&&d.push(a[c+1][b-1]),a[c-1]&&a[c-1][b+1]&&d.push(a[c-1][b+1]),a[c+1]&&a[c+1][b+1]&&d.push(a[c+1][b+1]));return d}};
-
 var GraphNodeType = { 
     OPEN: 1, 
     WALL: 0
