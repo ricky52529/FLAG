@@ -4,8 +4,8 @@
 FLAG Game Engine - FLAG.js
 Author: Zac Zidik
 URL: www.flagamengine.com
-version 3.0.17
-updated 4/7/2014
+version 3.0.18
+updated 4/8/2014
 
 This is the engine code for the FLAG Game Engine. You can use this file locally,
 on your server, or the most up to date version at www.flagamengine.com/FLAG/FLAG.js
@@ -6971,10 +6971,15 @@ FLAGWIND.prototype.runEvent = function(p){
 	
 	if(p.evt != undefined){
 	
+		//reasons why evt could not be run
+		p.errors = [];
+	
 		//is there an option?
 		if(p.opt == undefined){p.opt = 0;};
 		
 		this.checkRepeatLimit(p);
+		
+		return p.errors;
 		
 	}
 }
@@ -7002,14 +7007,16 @@ FLAGWIND.prototype.checkRepeatLimit = function(p){
 			this.checkPrerequisite(p);
 		
 		}else{
-	
-			console.log("The repeat limit for this event has been reached");
+			
+			p.errors.push("The repeat limit for this event has been reached.");
 		}
 	}
 };
 
 
 FLAGWIND.prototype.checkPrerequisite = function(p){
+
+	var errors = [];
 	
 	//no prerequisites
 	if(this.events[p.evt].prerequisites == undefined){
@@ -7099,11 +7106,11 @@ FLAGWIND.prototype.checkPrerequisite = function(p){
 			}
 		
 			//add the new event to the history
-			this.Player.history.push({evt:p.evt,opt:p.opt});	
+			this.Player.history.push({evt:p.evt,opt:p.opt});
 		
 		}else{
 	
-			console.log("The prerequisites for this event have not been met");
+			p.errors.push("The prerequisites for this event have not been met.");
 		}
 	}
 };
@@ -7196,36 +7203,99 @@ FLAGWIND.prototype.applyEffects = function(p){
 			break;		
 	};
 	
-	//hold temp vallues for the metrics
+	//hold temp values for the metrics
 	var tempValues = [];
 	for(var m=0;m<numMetrics;m++){
-	
-		//byTurn
-		if(this.Player.metrics[m].extras != undefined && this.Player.metrics[m].extras.byTurn != undefined && this.Player.metrics[m].extras.byTurn.length > 0){
 		
-			var lengthOfByTurn = this.Player.metrics[m].extras.byTurn.length;
+		//EXTRAS
+		//are there extras with this metric
+		if(this.Player.metrics[m].extras != undefined){
 			
-			//if there is not enough values in the byTurn
-			if(lengthOfByTurn <= p.turn){
+			//if using an extra called byTurn, the length of the player's history is used as the counter through the extra array
+			if(this.Player.metrics[m].extras.byTurn != undefined && this.Player.metrics[m].extras.byTurn.length > 0){
+		
+				var lengthOfByTurn = this.Player.metrics[m].extras.byTurn.length;
 			
-				//is byTurn set to loop
-				if(this.Player.metrics[m].extras.byTurnLoop != undefined && this.Player.metrics[m].extras.byTurnLoop == true){
+				//if there is not enough values in the byTurn
+				if(lengthOfByTurn <= p.turn){
+			
+					//is a loop set
+					if(this.Player.metrics[m].extras.loop != undefined && this.Player.metrics[m].extras.loop == true){
 				
-					//loop back around to get value
-					var turnValue = p.turn%lengthOfByTurn;
-					this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[turnValue]);
+						//loop back around to get value
+						var turnValue = p.turn % lengthOfByTurn;
+						this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[turnValue]);
 					
-				}else{
+					//no loop has been declared	
+					}else{
 			
-					//use the last value in the byTurn
-					this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[lengthOfByTurn-1]);
+						//use the last value in the byTurn
+						this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[lengthOfByTurn-1]);
 				
+					}
+				
+				//the extra array is long enough
+				}else{
+					
+					//use the length of the history as the counter
+					this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[p.turn]);
 				}
-				
+			
+			
+			//if using another metric as the counter through the extra array
 			}else{
-				this.Player.metrics[m].value = Number(this.Player.metrics[m].extras.byTurn[p.turn]);
+			
+				//is there an extra property the same name as a metric
+				for (var key in this.Player.metrics[m].extras) {
+				
+					//search the metrics, and store the indexes
+					var mIndexes = [];
+					for(var em=0;em<numMetrics;em++){
+						if(key == this.Player.metrics[em].name){
+							mIndexes.push(em);
+						}
+					}
+				}
+							
+				//for each extra that is a metric
+				var numMetricExtras = mIndexes.length;
+				for(var em=0;em<numMetricExtras;em++){
+				
+					//use the stored metric indexes to get the name of the metric
+					var metricName = this.Player.metrics[mIndexes[em]].name;
+				
+					//get the length of the extra array
+					var lea = this.Player.metrics[m].extras[metricName].length;
+					
+					//if there is not enough values in the extra array
+					if(lea <= this.Player.metrics[mIndexes[em]].value){
+						
+						//is a loop set
+						if(this.Player.metrics[m].extras.loop != undefined && this.Player.metrics[m].extras.loop == true){
+						
+							//loop back around to get value
+							var turnValue = this.Player.metrics[mIndexes[em]].value % lea;
+							this.Player.metrics[m].value = Number(this.Player.metrics[m].extras[metricName][turnValue]);
+						
+						//no loop has been declared	
+						}else{
+						
+							//use the last value
+							this.Player.metrics[m].value = Number(this.Player.metrics[m].extras[metricName][lea-1]);
+				
+						}
+						
+					//the extra array is long enough
+					}else{
+						
+						//use the metric as a counter
+						this.Player.metrics[m].value = Number(this.Player.metrics[m].extras[metricName][this.Player.metrics[mIndexes[em]].value]);
+					}
+				}
 			}
 		}
+		//END EXTRAS
+		
 		
 		tempValues.push({A:this.Player.metrics[m].value, B:this.Player.metrics[m].value, range:0});
 	};		
@@ -7401,22 +7471,70 @@ FLAGWIND.prototype.applyEffects = function(p){
 	if(this.events[p.evt].type == 0 || this.events[p.evt].type == 1 || this.events[p.evt].type == 2){	
 		
 		for(var m=0;m<numMetrics;m++){
-		
-			//byTurn
-			//check if there is a byTurn value for the metric
-			if(this.Player.metrics[m].extras != undefined && this.Player.metrics[m].extras.byTurn != undefined && this.Player.metrics[m].extras.byTurn.length > 0){
 			
-				//if so get the change 
-				var changeInMetric = tempValues[m].A - this.Player.metrics[m].value;
-				var byTurnLength = this.Player.metrics[m].extras.byTurn.length;
-				for(var bt=p.turn;bt<byTurnLength;bt++){
+			//EXTRAS
+			//are there extras that should be effected by the event
+			if(this.Player.metrics[m].extras != undefined){
+			
+				//is there an extra called byTurn, the length of the player's history is used as the counter through the extra array
+				if(this.Player.metrics[m].extras.byTurn != undefined && this.Player.metrics[m].extras.byTurn.length > 0){
 					
-					//set to decimals
-					changeInMetric = Number(changeInMetric.toFixed(this.decimals));
-					//apply the change to the rest of the future turns
-					this.Player.metrics[m].extras.byTurn[bt] += changeInMetric;
+					//get the change 
+					var changeInMetric = tempValues[m].A - this.Player.metrics[m].value;
+					
+					//length of extra array
+					var lea = this.Player.metrics[m].extras.byTurn.length;
+					
+					for(var a=0;a<lea;a++){
+					
+						//set to decimals
+						changeInMetric = Number(changeInMetric.toFixed(this.decimals));
+						
+						//apply the change to the values in the extra array
+						this.Player.metrics[m].extras.byTurn[a] += changeInMetric;
+					}
+					
+				
+				//are there extras named as metrics
+				}else{
+					
+					//is there an extra property the same name as a metric
+					for (var key in this.Player.metrics[m].extras) {
+				
+						//search the metrics, and store the indexes
+						var mIndexes = [];
+						for(var em=0;em<numMetrics;em++){
+							if(key == this.Player.metrics[em].name){
+								mIndexes.push(em);
+							}
+						}
+					}
+							
+					//for each extra that is a metric
+					var numMetricExtras = mIndexes.length;
+					for(var em=0;em<numMetricExtras;em++){
+						
+						//get the change 
+						var changeInMetric = tempValues[m].A - this.Player.metrics[m].value;
+						
+						//use the stored metric indexes to get the name of the metric
+						var metricName = this.Player.metrics[mIndexes[em]].name;
+					
+						//length of extra array
+						var lea = this.Player.metrics[m].extras[metricName].length;
+						
+						for(var a=0;a<lea;a++){
+					
+							//set to decimals
+							changeInMetric = Number(changeInMetric.toFixed(this.decimals));
+						
+							//apply the change to the values in the extra array
+							this.Player.metrics[m].extras[metricName][a] += changeInMetric;
+						}
+					}				
 				}
 			}
+			//END EXTRAS
 			
 			//set to decimals
 			tempValues[m].A = Number(tempValues[m].A.toFixed(this.decimals));
@@ -7456,19 +7574,68 @@ FLAGWIND.prototype.applyEffects = function(p){
 			//add it to the amount of change that would have happen if the slider was all the way left, in case the change was taking place across zero
 			tempValues[m].range = changeFullLeft + (totalAmountofChange * (percentageOfSlide/100));
 			
-			//byTurn
-			//check if there is a byTurn value for the metric
-			if(this.Player.metrics[m].extras != undefined && this.Player.metrics[m].extras.byTurn != undefined && this.Player.metrics[m].extras.byTurn.length > 0){
-				//if so get the change 
-				var changeInMetric = tempValues[m].range;
-				var byTurnLength = this.Player.metrics[m].extras.byTurn.length;
-				for(var bt=p.turn;bt<byTurnLength;bt++){
+			//EXTRAS
+			//are there extras that should be effected by the event
+			if(this.Player.metrics[m].extras != undefined){
+			
+				//is there an extra called byTurn, the length of the player's history is used as the counter through the extra array
+				if(this.Player.metrics[m].extras.byTurn != undefined && this.Player.metrics[m].extras.byTurn.length > 0){
 				
-					//set to decimals
-					changeInMetric = Number(changeInMetric.toFixed(this.decimals));
-					//apply the change to the rest of the future turns
-					this.Player.metrics[m].extras.byTurn[bt] += changeInMetric;
-			};};
+					//get the change 
+					var changeInMetric = tempValues[m].range;
+					
+					//length of extra array
+					var lea = this.Player.metrics[m].extras.byTurn.length;
+					
+					for(var a=0;a<lea;a++){
+					
+						//set to decimals
+						changeInMetric = Number(changeInMetric.toFixed(this.decimals));
+						
+						//apply the change to the values in the extra array
+						this.Player.metrics[m].extras.byTurn[a] += changeInMetric;
+					}
+					
+			//are there extras named as metrics
+			}else{
+					
+					//is there an extra property the same name as a metric
+					for (var key in this.Player.metrics[m].extras) {
+				
+						//search the metrics, and store the indexes
+						var mIndexes = [];
+						for(var em=0;em<numMetrics;em++){
+							if(key == this.Player.metrics[em].name){
+								mIndexes.push(em);
+							}
+						}
+					}
+							
+					//for each extra that is a metric
+					var numMetricExtras = mIndexes.length;
+					for(var em=0;em<numMetricExtras;em++){
+						
+						//get the change 
+						var changeInMetric = tempValues[m].range;
+						
+						//use the stored metric indexes to get the name of the metric
+						var metricName = this.Player.metrics[mIndexes[em]].name;
+					
+						//length of extra array
+						var lea = this.Player.metrics[m].extras[metricName].length;
+						
+						for(var a=0;a<lea;a++){
+					
+							//set to decimals
+							changeInMetric = Number(changeInMetric.toFixed(this.decimals));
+						
+							//apply the change to the values in the extra array
+							this.Player.metrics[m].extras[metricName][a] += changeInMetric;
+						}
+					}				
+				}
+			}
+			//END EXTRAS			
 			
 			//set to decimals
 			tempValues[m].range = Number(tempValues[m].range.toFixed(this.decimals));
