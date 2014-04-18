@@ -1,0 +1,379 @@
+<!DOCTYPE html> 
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0, minimum-scale=1.0,user-scalable=no"> 
+<link rel="icon" type="image/png" href="http://www.flagamengine.com/images/poleIcon.png">
+
+<title>POLE Editor</title> 
+
+<link href="css/editors.css" type="text/css" rel="stylesheet" />
+<script type="text/javascript" src="js/POLEEDITOR.js"></script> 
+<script type="text/javascript" src="js/POLE.js"></script> 
+<script type="text/javascript" src="js/FLAG.js"></script>
+
+</head> 
+
+<body  oncontextmenu="return false;"> 
+
+	<div id="game">
+		<canvas id="canvas"></canvas>
+		<div id="gui">
+			
+			<!--MENU BAR-->
+			<div id="menuBar">
+				<ul id="menuBar_choices"><li><a id="mB_file" href="javascript:PE.menus_dropDowns('file');">File</a></li><li><a id="mB_edit" href="javascript:PE.menus_dropDowns('edit');">Edit</a></li><li><a id="mB_view" href="javascript:PE.menus_dropDowns('view');">View</a></li></ul>
+			</div>
+			<!--end MENU BAR-->
+			
+			<!--TOOLS-->
+			<div id="tools">
+				<button class="tool_button" id="tool_selectArrow" onclick="PE.tools_select(this)" title="Select"></button>
+				<button class="tool_button" id="tool_move" onclick="PE.tools_select(this)" title="Move Map"></button>
+				<button class="tool_button" id="tool_draw" onclick="PE.tools_select(this)" title="Draw Tiles"></button>
+				<button class="tool_button" id="tool_erase" onclick="PE.tools_select(this)" title="Erase Tiles"></button>
+				<button class="tool_button" id="tool_drawTileSprites" onclick="PE.tools_select(this)" title="Draw Tile Sprites"></button>
+				<button class="tool_button" id="tool_eraseTileSprites" onclick="PE.tools_select(this)" title="Erase Tile Sprites"></button>
+				<button class="tool_button" id="tool_drawTiledObjects" onclick="PE.tools_select(this)" title="Draw Tiled Objects"></button>
+				<button class="tool_button" id="tool_eraseTiledObjects" onclick="PE.tools_select(this)" title="Erase Tiled Objects"></button>
+				<button class="tool_button" id="tool_addSprite" onclick="PE.tools_select(this)" title="Add Sprite to Scene"></button>
+				<button class="tool_button" id="tool_addActor" onclick="PE.tools_select(this)" title="Add Actor to Scene"></button>
+				<button class="tool_button" id="tool_walkables" onclick="PE.tools_select(this)" title="Draw WalkableTiles"></button>
+				<button class="tool_button" id="tool_zoomIn" onclick="PE.tools_select(this)" title="Zoom In"></button>
+				<button class="tool_button" id="tool_zoomOut" onclick="PE.tools_select(this)" title="Zoom Out"></button>
+				<button class="tool_button" id="tool_zeroMap" onclick="PE.tools_select(this)" title="Zero Map"></button>
+			</div>
+			<!--end TOOLS-->
+		
+			<!--MENUS-->
+			<div id="menus">
+				<ul id="menus_choices">
+					<li><a id="m_assets" href="javascript:PE.menus_tabbed('assets');">Assets</a></li>
+					<li><a id="m_scene" href="javascript:PE.menus_tabbed('scene');">Scenes</a></li>
+					<li><a id="m_gameSettings" href="javascript:PE.menus_tabbed('gameSettings');">Game</a></li>
+					<li><a id="m_info" href="javascript:PE.menus_tabbed('info');">Info</a></li>
+				</ul>
+			
+				<!--ASSETS-->
+				<div id="assets" class="subMenu">
+				
+				<!--images-->
+				<div class="section" id="section_images">
+					<button class="section_button" id="section_button_images" onclick="PE.menus_section(this)"><div id="section_arrow"></div>Images</button>
+					<div id="imageList" class="selectBox"></div>
+					<button onclick="PE.menus_popUps('addImage');" id="addImage">Add</button><button onclick="PE.menus_popUps('editImage');" id="editImage">Edit</button><button onclick="PE.assets_images_remove()" id="removeImage">Remove</button><br>
+				</div>
+				<!--end images-->
+			
+				<hr>
+			
+				<!--tiles-->
+				<div class="section" id="section_tiles">
+				<button class="section_button" id="section_button_tiles" onclick="PE.menus_section(this)"><div id="section_arrow"></div>Tiles</button>
+				<h2>Tile Sheets:</h2><br>
+				<select id="tileSheetList" class="dropDown" onchange="PE.assets_tiles_tileSheets_select()"></select>
+				<button onclick="PE.menus_popUps('addTileSheet');">Add</button><button onclick="PE.menus_popUps('editTileSheet');">Edit</button><button onclick="PE.assets_tiles_tileSheets_remove()">Remove</button>
+				<hr>
+				<h2>Tiles:</h2><br>
+				<div id="tileList" class="tileSelectorBox"></div>
+				<button class="tileScale_unselected" id="tileScale_3" onclick="PE.assets_tiles_scale(this)">300%</button><button class="tileScale_unselected" id="tileScale_2" onclick="PE.assets_tiles_scale(this)">200%</button><button class="tileScale_selected" id="tileScale_1" onclick="PE.assets_tiles_scale(this)">100%</button><button class="tileScale_unselected" id="tileScale_5" onclick="PE.assets_tiles_scale(this)">50%</button><button class="tileScale_unselected" id="tileScale_25" onclick="PE.assets_tiles_scale(this)">25%</button>
+				<hr>
+				<h2 style="display:block;padding:0px;">Tile Sprites:</h2>
+				<div id="tileSheetAnimationsList" class="selectBox"></div>
+				<button onclick="PE.menus_popUps('addTileSheetAnimation');">Add</button><button onclick="PE.menus_popUps('editTileSheetAnimation');">Edit</button><button onclick="PE.assets_tiles_tileSprites_remove()">Remove</button><br>
+				<hr>
+				<h2>Tiled Object Sheets:</h2><br>
+				<select id="tiledObjectSheetList" class="dropDown" onchange="PE.assets_tiles_tiledObjectSheets_select()" onfocus="PE.assets_tiles_tiledObjectSheets_select()"></select>
+				<button onclick="PE.menus_popUps('addTiledObjectSheet');">Add</button><button onclick="PE.menus_popUps('editTiledObjectSheet');">Edit</button><button onclick="PE.assets_tiles_tiledObjectSheets_remove()">Remove</button>
+				<hr>
+				<h2 style="display:block;padding:0px;">Tiled Object Sheet Animations:</h2>
+				<div id="tiledObjectSheetAnimationsList" class="selectBox"></div>
+				<button onclick="PE.menus_popUps('addTiledObjectSheetAnimation');">Add</button><button onclick="PE.menus_popUps('editTiledObjectSheetAnimation');">Edit</button><button onclick="PE.assets_tiles_tiledObjects_animation_remove()">Remove</button><br>
+				</div>
+				<!--end tiles-->
+			
+				<hr>
+	
+				<!--sprites-->
+				<div class="section" id="section_sprites">
+				<button class="section_button" id="section_button_sprites" onclick="PE.menus_section(this)"><div id="section_arrow"></div>Sprites</button>
+				<h2>Sprite Sheets:</h2><br>
+				<select id="spriteSheetList" class="dropDown" onchange="PE.assets_sprites_spriteSheets_select()" onfocus="PE.assets_sprites_spriteSheets_select()"></select>
+				<button onclick="PE.menus_popUps('addSpriteSheet');">Add</button><button onclick="PE.menus_popUps('editSpriteSheet');">Edit</button><button onclick="PE.assets_sprites_spriteSheets_copy();">Copy</button><button onclick="PE.assets_sprites_spriteSheets_remove()">Remove</button>
+				<hr>
+				<h2 style="display:block;padding:0px;">Sprite Sheet Animations:</h2>
+				<div id="spriteSheetAnimationsList" class="selectBox"></div>
+				<button onclick="PE.menus_popUps('addSpriteSheetAnimation');">Add</button><button onclick="PE.menus_popUps('editSpriteSheetAnimation');">Edit</button><button onclick="PE.assets_sprites_animation_remove()">Remove</button><br>
+				</div>
+				<!--end sprites-->
+			
+				<hr>
+			
+				<!--actors-->
+				<div class="section" id="section_actors">
+				<button class="section_button" id="section_button_actors" onclick="PE.menus_section(this)"><div id="section_arrow"></div>Actors</button>
+				<div id="actorsList" class="selectBox"></div>
+				<button onclick="PE.menus_popUps('addActor');">Add</button><button onclick="PE.menus_popUps('editActor');">Edit</button><button onclick="PE.assets_actors_copy()">Copy</button><button onclick="PE.assets_actors_remove()">Remove</button><br>
+				</div>
+				<!--end actors-->
+			
+				<hr>
+			
+				<!--sounds-->
+				<div class="section" id="section_sounds">
+				<button class="section_button" id="section_button_sounds" onclick="PE.menus_section(this)"><div id="section_arrow"></div>Sounds</button>
+				<div id="soundList" class="selectBox"></div>
+				<button onclick="PE.menus_popUps('addSound');" id="addSound">Add</button><button onclick="PE.menus_popUps('editSound');" id="editSound">Edit</button><button onclick="PE.assets_sounds_remove()" id="removeSound">Remove</button>
+				</div>
+				<!--end sounds-->
+			
+				<hr>
+			
+			</div>
+			<!--end ASSETS-->
+	
+			<!--SCENES-->
+		
+				<div id="scene" class="subMenu" style="height:'+(document.getElementById('game').clientHeight-271).toString()+'px;visibility:hidden;overflow-y:auto;">
+				<select id="scenesList" class="dropDown" onchange="PE.scene_select()"></select>
+				<button onclick="PE.scene_add();">Add</button><button onclick="PE.scene_remove()">Remove</button><button onclick="PE.scene_reload()">Reload</button>
+		
+				<hr>
+			
+				<!--setup-->
+				<div class="section" id="section_sceneSetUp">
+				<button class="section_button" id="section_button_sceneSetUp" onclick="PE.menus_section(this)"><div id="section_arrow"></div>Set Up</button>
+				<h2>Scene Name:</h2><br><input type="text" name="sceneName" id="sceneName" value="'+POLE.scenes[PE.sceneSelected].name+'" onblur="PE.scene_setUp_name()"><hr>
+				<h2>Map Type:</h2><br>
+				
+				<input type="radio" id="orthogonal" value="orthogonal" name="type" onclick="PE.scene_setUp_mapType(this);"/>
+				<label for="orthogonal"><span></span>Orthogonal</label>
+			
+				<input type="radio" id="isometric" value="isometric" name="type" onclick="PE.scene_setUp_mapType(this);"/>
+				<label for="isometric"><span></span>Isometric</label>
+			
+				<input type="radio" id="hexagonal" value="hexagonal" name="type" onclick="PE.scene_setUp_mapType(this);"/>
+				<label for="hexagonal"><span></span>Hexagonal</label>
+				
+				<hr style="margin-top:10px;">
+				<h2>Tile Dimensions:</h2><br><span>w:</span><span id="scene_tile_Width" class="blue">'+POLE.scenes[PE.sceneSelected].tileWidth+'</span><span> h:</span><span id="scene_tile_Height" class="blue">'+POLE.scenes[PE.sceneSelected].tileHeight+'</span><br><button id="edit_mapDimensions" onclick="PE.menus_popUps('edit_tileDimensions');" style="margin-top:10px;">Edit</button><hr>
+				<h2>Map Dimensions:</h2><br><span>w:</span><span id="scene_tiles_Wide" class="blue">'+POLE.scenes[PE.sceneSelected].tilesWide+'</span><span> h:</span><span id="scene_tiles_High" class="blue">'+POLE.scenes[PE.sceneSelected].tilesHigh+'</span><br><button id="edit_mapDimensions" onclick="PE.menus_popUps('edit_mapDimensions');" style="margin-top:10px;">Edit</button>
+				<hr>
+				<h2>Background Color:</h2><br><input type="text" id="bgColor" value="808080" onblur="PE.scene_setUp_backgroundColor()">
+				<hr>
+				<h2>Background Image:</h2>
+				<select id="bgImageList" class="dropDown" onchange="PE.scene_setUp_backgroundImage()"></select>
+				</div>
+				<!--end setup-->
+			
+				<hr>
+		
+				<!--scene layers-->
+				<div class="section" id="section_layers">
+					<button class="section_button" id="section_button_layers" onclick="PE.menus_section(this)"><div id="section_arrow"></div>Layers</button>
+					<div id="layerSelect"></div>
+					<button onclick="PE.scene_layers_add()" id="addLayer">Add</button><button onclick="PE.scene_layers_remove()" id="removeLayer">Remove</button>
+				</div>
+				<!--end layers-->
+			
+				<hr>
+			
+				<!--scene assets-->
+				<div class="section" id="section_assets">
+				<button class="section_button" id="section_button_assets" onclick="PE.menus_section(this)"><div id="section_arrow"></div>Assets</button>
+				<h2>Tile Sprites:</h2><br>
+				<div id="tileSpriteList" class="selectBox"></div>
+				<button onclick="PE.menus_popUps('addTileSprite');">Add</button><button onclick="PE.menus_popUps('editTileSprite');">Edit</button><button onclick="PE.scene_assets_tileSprites_remove();">Remove</button>
+				<hr>
+				<h2>Tiled Objects:</h2><br>
+				<div id="tiledObjectsList" class="selectBox"></div>
+				<button onclick="PE.menus_popUps('addTiledObject');">Add</button><button onclick="PE.menus_popUps('editTiledObject');">Edit</button><button onclick="PE.scene_assets_tiledObjects_remove();">Remove</button>
+				<hr>
+				<h2>Sprites:</h2><br>
+				<div id="spritesInSceneList" class="selectBox"></div>
+				<button onclick="PE.menus_popUps('addSprite');">Add</button><button onclick="PE.menus_popUps('editSprite');">Edit</button><button onclick="PE.scene_assets_sprites_remove();">Remove</button>
+				<hr>
+				<h2>Actors:</h2><br>
+				<div id="actorsInSceneList" class="selectBox"></div>
+				<button onclick="PE.menus_popUps('addActorToScene');">Add</button><button onclick="PE.menus_popUps('editActorInScene');">Edit</button><button onclick="PE.scene_assets_actors_remove();">Remove</button>
+				</div>
+				<!--end scene assets-->
+			
+				<hr>
+		
+				<!--box2d-->
+				<div class="section" id="section_box2d">
+				<button class="section_button" id="section_button_box2d" onclick="PE.menus_section(this)"><div id="section_arrow"></div>Box 2D</button>
+				<h2>World Colliders:</h2><br>
+				
+				<input type="checkBox" id="useWTC" onclick="PE.scene_box2d_worldColliders_useWalkables()" checked="true"/>
+				<label for="useWTC"><span></span>Use Walkable Tile Colliders</label>
+				
+				<div id="worldColliderList" class="selectBox"></div>
+				<button onclick="PE.menus_popUps('addWorldCollider');">Add</button><button onclick="PE.menus_popUps('editWorldCollider');">Edit</button><button onclick="PE.scene_box2d_worldColliders_remove();">Remove</button><button onclick="PE.scene_box2d_worldColliders_copy();">Copy</button>
+				<hr>
+				<h2>Gravity:</h2><br><span>x:</span><span id="box2d_gravityX">'+POLE.scenes[PE.sceneSelected].gravity.x+'</span><span> y:</span><span id="box2d_gravityY">'+POLE.scenes[PE.sceneSelected].gravity.y+'</span><br><button id="edit_gravity" onclick="PE.menus_popUps('edit_gravity');" style="margin-top:10px;">Edit</button>
+				</div>
+				<!--end box2d-->
+			
+				<hr>
+			</div>
+			<!--end SCENES-->
+			
+			<!--GAME SETTINGS-->
+			<div id="gameSettings" class="subMenu">
+			
+				<!--display-->
+				<div class="section" id="section_gameSetUp">
+					<button class="section_button" id="section_button_gameSetUp" onclick="PE.menus_section(this)"><div id="section_arrow"></div>Display</button>
+					<h2>Resolution:</h2><br><span>w:</span><span id="game_Width" class="blue">'+POLE.display.w+'</span><span> h:</span><span id="game_Height" class="blue">'+POLE.display.h+'</span><br><button id="edit_mapDimensions" onclick="PE.menus_popUps('edit_resolution');" style="margin-top:10px;">Edit</button>
+					<hr>
+					<h2>Fit:</h2>
+					
+					<div>
+						<input type="radio" id="fit_static" name="fitType" onclick="POLE.display.fit = 'static';FLAG.scaleGame();PE.pole_update_display();"/>
+						<label for="fit_static"><span></span>Static</label>
+					</div>
+					
+					<div>
+						<input type="radio" id="fit_window" name="fitType" onclick="POLE.display.fit = 'window';FLAG.scaleGame();PE.pole_update_display();"/>
+						<label for="fit_window"><span></span>Window</label>
+					</div>
+					
+					<hr style="margin-top:10px;">
+					<div style="margin-top:5px;">
+						<h2>Scale:</h2>
+						
+						<input type="radio" id="scale_none" name="scaleType" onclick="POLE.display.scale = 'none';FLAG.scaleGame();PE.pole_update_display();"/>
+						<label for="scale_none"><span></span>None</label>
+						
+						<input type="radio" id="scale_width" name="scaleType" onclick="POLE.display.scale = 'width';FLAG.scaleGame();PE.pole_update_display();"/>
+						<label for="scale_width"><span></span>Width</label>
+					
+						<input type="radio" id="scale_both" name="scaleType" onclick="POLE.display.scale = 'both';FLAG.scaleGame();PE.pole_update_display();"/>
+						<label for="scale_both"><span></span>Both</label>
+						
+						<input type="radio" id="scale_adapt" name="scaleType" onclick="POLE.display.scale = 'adapt';FLAG.scaleGame();PE.pole_update_display();"/>
+						<label for="scale_adapt"><span></span>Adapt</label>
+						
+					</div>
+					
+					<hr style="margin-top:10px;">
+					<div style="margin-top:5px;">
+						<h2>Interpolation:</h2>
+					
+						<input type="checkBox" id="imageSmoothing" onclick="PE.game_display_interpolation()"/>
+						<label for="imageSmoothing"><span></span>Image Smoothing</label>
+					</div>
+					
+					<hr style="margin-top:10px;">
+					<div style="margin-top:5px;">
+						<h2>Buffering:</h2>
+					
+						<input type="checkBox" id="imageBuffer" onclick="PE.game_display_buffering()"/>
+						<label for="imageBuffer"><span></span>Images</label>
+					</div>
+				</div>
+				<!--end display-->
+				
+				<hr>
+				
+				<!--fps-->
+				<div class="section" id="section_fps">
+					<button class="section_button" id="section_button_fps" onclick="PE.menus_section(this)"><div id="section_arrow"></div>FPS</button>
+					<div style="margin-top:5px;">
+						<input type="checkBox" id="useRAF" onclick="PE.game_fps_raf()"/>
+						<label for="useRAF"><span></span>Use Request Animation Frame</label>
+					</div>
+					
+					<hr style="margin-top:10px;">
+					<h2>Set Frames Per Second:</h2><br><span id="setFPS" class="blue">'+POLE.fps.set+'</span><br><button id="edit_setFPS" onclick="PE.menus_popUps('edit_setFPS');" style="margin-top:10px;">Edit</button>
+					
+					<hr style="margin-top:10px;">
+					<h2>Sprite Frames Per Second:</h2><br><span id="spriteFPS" class="blue">'+POLE.fps.sprites+'</span><br><button id="edit_spriteFPS" onclick="PE.menus_popUps('edit_spriteFPS');" style="margin-top:10px;">Edit</button>
+
+					
+				</div>
+				<!--end fps-->
+				
+				<hr>
+				
+			</div>
+			<!--end GAME SETTINGS-->
+	
+			<!--INFO-->
+			<div id="info" class="subMenu" style="height:'+(document.getElementById('game').clientHeight-271).toString()+'px;visibility:hidden;overflow-y:auto;">
+				<div><h2>Frames Per Second: </h2><span id="fps">'+FLAG.fps+'</span><hr></div>
+				<div><h2>Average FPS: </h2><span id="avgFPS">'+FLAG.avgFPS+'</span><hr></div>
+				<div><h2>Mouse:</h2><br><table><tr><td><h2>x: </h2><span id="mouseLocX"></span></td><td><h2>col: </h2><span id="mouseCol"></span></td></tr><tr><td><h2>y: </h2><span id="mouseLocY"></span></td><td><h2>row: </h2><span id="mouseRow"></span></td></tr></table><hr></div>
+				<div><h2>Scene Scale: </h2><span id="sceneScale">100%</span><hr></div>
+			</div>
+			<!--end INFO-->
+	
+		</div>
+		<!--end MENUS-->
+	
+			<!--JSON-->
+			<div id="code_container" style="top:'+(document.getElementById('game').clientHeight-200).toString()+'px;">
+			<div id="code_bar">
+				<h2 id="codeH2">POLE</h2>
+				<button onclick="PE.pole_open();" style="float:right;margin:0px;">Open</button><button onclick="PE.menus_popUps('exportJSON');" style="float:right;margin:0px;margin-right:5px;">Export</button><button onclick="PE.menus_popUps('importJSON');" style="float:right;margin:0px;margin-right:5px;">Import</button>
+			</div>
+			<div id="JSON"></div>
+			</div>
+			<!--end JSON-->
+
+			<!--MENU BAR DROP DOWNS-->
+			<div id="mBdD_file" class="menuBarDropDown">
+				<ul id="mBdD_view_choices" class="mbdropDown">
+					<li><a id="export" onclick="javascript:PE.menus_popUps('exportJSON');">Export<span class="keyCommand">&#8679; CTRL E</span></a></li>
+					<li><a id="import" onclick="javascript:PE.menus_popUps('importJSON');">Import<span class="keyCommand">&#8679; CTRL I</span></a></li>
+				</ul>
+			</div>
+			
+			<div id="mBdD_edit" class="menuBarDropDown">
+				<ul id="mBdD_edit_choices" class="mbdropDown">
+					<li><a id="undo" onclick="javascript:PE.undo();">Undo<span class="keyCommand">&#8679; CTRL Z</span></a></li>
+				</ul>
+			</div>
+			
+			<div id="mBdD_view" class="menuBarDropDown">
+				<ul id="mBdD_view_choices" class="mbdropDown">
+					<li><a id="dDtools" href="javascript:PE.menus_view('tools');">Hide Tools<span class="keyCommand">&#8679; CTRL 1</span></a></li>
+					<li><a id="dDmenus" href="javascript:PE.menus_view('menus');">Hide Menus<span class="keyCommand">&#8679; CTRL 2</span></a></li>
+					<li><a id="json" href="javascript:PE.menus_view('json');">Hide POLE<span class="keyCommand">&#8679; CTRL 3</span></a></li>
+					<li><a id="grid" href="javascript:PE.menus_view('grid');">Hide Grid<span class="keyCommand">&#8679; CTRL G</span></a></li>
+					<li><a id="walkables" href="javascript:PE.menus_view('walkables');">Show Walkables<span class="keyCommand">&#8679; CTRL W</span></a></li>
+					<li><a id="debugDraw" href="javascript:PE.menus_view('debugDraw');">Show Box2D<span class="keyCommand">&#8679; CTRL B</span></a></li>
+				</ul>
+			</div>
+			<!--end MENU BAR DROP DOWNS-->
+
+			<!--POPUPS-->
+			<div id="popUp"></div>
+			<!--end POPUPS-->
+
+			<!--AUDIO-->
+			<audio id="testAudio"></audio>
+			<!--end AUDIO-->
+	
+		</div>
+		<!--end gui-->
+		
+		<div id="glass">
+			<div id="whiteGlass"></div>
+			<div id="progressBar">
+				<div id="pole2x2"></div>
+				<div id="loadProgressBar">
+					<div id="loadProgress"></div>
+				</div>
+				<div id="loadProgressText"></div>
+			</div>
+		</div> 
+		<!--end glass-->
+		
+	</div>
+	<!--end game-->
+	
+</body> 
+
+</html> 
