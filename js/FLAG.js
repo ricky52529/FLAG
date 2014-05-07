@@ -7244,12 +7244,12 @@ FLAGWIND.prototype.applyEffects = function(p){
 			
 			//if using another metric as the counter through the extra array
 			}else{
-			
+				
+				var mIndexes = [];
 				//is there an extra property the same name as a metric
 				for (var key in this.Player.metrics[m].extras) {
 				
 					//search the metrics, and store the indexes
-					var mIndexes = [];
 					for(var em=0;em<numMetrics;em++){
 						if(key == this.Player.metrics[em].name){
 							mIndexes.push(em);
