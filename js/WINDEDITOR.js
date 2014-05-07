@@ -870,12 +870,33 @@ WINDEDITOR.prototype.copyOverallEffect = function(){
 	
 	var numOTeffects = WIND.events[this.eventSelected].effects[this.effectSelected].ot.length;
 	for(var i=0;i<numOTeffects;i++){
-		newEffect.ot.push([Number(WIND.events[this.eventSelected].effects[this.effectSelected].ot[i][0]),String(WIND.events[this.eventSelected].effects[this.effectSelected].ot[i][1]),Number(WIND.events[this.eventSelected].effects[this.effectSelected].ot[i][2]),Number(WIND.events[this.eventSelected].effects[this.effectSelected].ot[i][3])]);
+	
+		//is the effect an eGroup
+		if(WIND.events[this.eventSelected].effects[this.effectSelected].ot[i][0] == 'g'){
+	
+			newEffect.ot.push(['g',Number(WIND.events[this.eventSelected].effects[this.effectSelected].ot[i][1])]);
+
+		//is the effect a direct effect on a metric
+		}else{
+			
+			newEffect.ot.push([Number(WIND.events[this.eventSelected].effects[this.effectSelected].ot[i][0]),String(WIND.events[this.eventSelected].effects[this.effectSelected].ot[i][1]),Number(WIND.events[this.eventSelected].effects[this.effectSelected].ot[i][2]),Number(WIND.events[this.eventSelected].effects[this.effectSelected].ot[i][3])]);
+		}
 	}
 	
 	var numReffects = WIND.events[this.eventSelected].effects[this.effectSelected].r.length;
 	for(var i=0;i<numReffects;i++){
-		newEffect.r.push([Number(WIND.events[this.eventSelected].effects[this.effectSelected].r[i][0]),String(WIND.events[this.eventSelected].effects[this.effectSelected].r[i][1]),Number(WIND.events[this.eventSelected].effects[this.effectSelected].r[i][2]),Number(WIND.events[this.eventSelected].effects[this.effectSelected].r[i][3])]);
+	
+		//is the effect an eGroup
+		if(WIND.events[this.eventSelected].effects[this.effectSelected].r[i][0] == 'g'){
+	
+			newEffect.r.push(['g',Number(WIND.events[this.eventSelected].effects[this.effectSelected].r[i][1])]);
+	
+		//is the effect a direct effect on a metric
+		}else{
+
+			newEffect.r.push([Number(WIND.events[this.eventSelected].effects[this.effectSelected].r[i][0]),String(WIND.events[this.eventSelected].effects[this.effectSelected].r[i][1]),Number(WIND.events[this.eventSelected].effects[this.effectSelected].r[i][2]),Number(WIND.events[this.eventSelected].effects[this.effectSelected].r[i][3])]);
+	
+		}
 	}
 	
 	WIND.events[this.eventSelected].effects.push(newEffect);
