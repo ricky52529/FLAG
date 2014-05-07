@@ -32,7 +32,7 @@ function FLAGENGINE(game,canvas,gui,glass){
 	this.Box2D = {world:{},scale:32,ready:false,debug:false,velIt:8,posIt:3,timeStep:1/60};
 	this.Canvas = canvas;
 	this.center = {x:canvas.width/2,y:canvas.height/2};
-	this.Context = canvas.getContext('2d');
+	this.setContext(canvas,'2d');
 	this.Cursor = {on:false,tiles:null,tileAlpha:1,rect:null,point:null,image:null,images:null,imageAlpha:1};
 	this.FPS = {now:60,prev:0,set:30,avg:60,avgA:[],sprites:15,useRAF:true,RAF:null};
 	this.Game = game;
@@ -54,7 +54,6 @@ function FLAGENGINE(game,canvas,gui,glass){
 	this.update_Interval = null;
 	this.Walkables = {on:false,color_0:"#FF0000",color_1:"#00FF00",alpha:.25};
 	this.zoom = {in:2,out:.5};	
-
 };
 
 
@@ -3980,9 +3979,14 @@ FLAGENGINE.prototype.update = function(){
 	this.lastW = Number(this.Canvas.width);
 	this.lastH = Number(this.Canvas.height);
 	
+
 	//DRAW THE CANVAS
 	if(this.running == true){
-		this.draw();
+		if(this.contextType == "2d"){
+			this.draw();
+		}else if(this.contextType == "webgl"){
+			this.draw_webgl();
+		}
 	}
 }
 
@@ -4041,6 +4045,99 @@ FLAGENGINE.prototype.zoomOut = function(centerPoint){
 //------------------------------------------------------------------
 //END ZOOM
 
+
+//WEBGL -- EXPERIMENTAL
+//these are new functions for a webgl canvas
+//------------------------------------------------------------------
+//------------------------------------------------------------------
+FLAGENGINE.prototype.setContext = function(canvas,setAs){
+
+	if(setAs != '2d'){
+	
+		try {
+			// Try to grab the standard context. If it fails, fallback to experimental.
+			this.Context = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+			this.contextType = "webgl";
+		  }
+		catch(e) {}
+
+		// If we don't have a webgl context, use standard 2d context
+		if (!this.Context) {
+			this.Context = canvas.getContext('2d');
+			this.contextType = "2d";
+	
+		//if there is a webgl context
+		}else{
+
+			this.Context.clearColor(0.0, 0.0, 0.0, 1.0);										// Set clear color to black, fully opaque
+			this.Context.enable(this.Context.DEPTH_TEST);										// Enable depth testing
+			this.Context.depthFunc(this.Context.LEQUAL);										// Near things obscure far things
+			this.Context.clear(this.Context.COLOR_BUFFER_BIT|this.Context.DEPTH_BUFFER_BIT);	// Clear the color as well as the depth buffer.
+		}
+	
+	}else{
+	
+		this.Context = canvas.getContext('2d');
+		this.contextType = "2d";
+	
+	}
+	
+	console.log(this.contextType);
+}
+
+FLAGENGINE.prototype.createProgram = function(vstr, fstr) {
+  var program = this.Context.createProgram();
+  var vshader = this.createShader(vstr, this.Context.VERTEX_SHADER);
+  var fshader = this.createShader(fstr, this.Context.FRAGMENT_SHADER);
+  this.Context.attachShader(program, vshader);
+  this.Context.attachShader(program, fshader);
+  this.Context.linkProgram(program);
+  return program;
+}
+
+FLAGENGINE.prototype.createShader = function(str, type) {
+  var shader = this.Context.createShader(type);
+  this.Context.shaderSource(shader, str);
+  this.Context.compileShader(shader);
+  return shader;
+}
+
+FLAGENGINE.prototype.draw_webgl = function(){
+
+
+	var vertexPosBuffer = this.Context.createBuffer();
+	this.Context.bindBuffer(this.Context.ARRAY_BUFFER, vertexPosBuffer);
+	var vertices = [-0.5, -0.5, 0.5, -0.5, 0, 0.5];
+	this.Context.bufferData(this.Context.ARRAY_BUFFER, new Float32Array(vertices), this.Context.STATIC_DRAW);
+	var vs = 'attribute vec2 pos;' + 'void main() { gl_Position = vec4(pos, 0, 1); }';
+	var fs = 'precision mediump float;' + 'void main() { gl_FragColor = vec4(0,0.8,0,1); }';
+	var program = this.createProgram(vs,fs);
+	this.Context.useProgram(program);
+	program.vertexPosAttrib = this.Context.getAttribLocation(program, 'pos');
+	this.Context.enableVertexAttribArray(program.vertexPosAttrib);
+	this.Context.vertexAttribPointer(program.vertexPosAttrib, 2, this.Context.FLOAT, false, 0, 0);
+	this.Context.drawArrays(this.Context.TRIANGLES, 0, 3);
+
+
+	//FPS
+	var thisLoop = new Date;
+    this.FPS.now = Math.floor(1000 / (thisLoop - this.FPS.prev));
+    this.FPS.prev = thisLoop;
+	//calculate average FPS
+	this.FPS.avgA.push(this.FPS.now);
+	if(this.FPS.avgA.length > 60){
+		this.FPS.avgA.shift();
+	}
+	var lengthOfAvg = this.FPS.avgA.length;
+	var totalAvgFPS = 0;
+	for(var i=0;i<lengthOfAvg;i++){
+		totalAvgFPS += this.FPS.avgA[i];
+	}
+	this.FPS.avg = Math.floor(totalAvgFPS/lengthOfAvg);
+}
+//------------------------------------------------------------------
+//------------------------------------------------------------------
+//END WEBGL
 
 //------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------
