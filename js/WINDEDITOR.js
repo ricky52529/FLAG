@@ -946,8 +946,8 @@ WINDEDITOR.prototype.displayEvent = function(){
 		//happenstance
 		case 0:
 			html += '<h1>' + WIND.events[this.simEvent].name + '</h1>';
-			html += '<p class="simMainText">' + WIND.events[this.simEvent].mText + '</p>';
-			html += '<p class="simEffectText">' + WIND.events[this.simEvent].effects[0].text + '</p>';
+			html += '<p class="simMainText">' + this.displayText(WIND.events[this.simEvent].mText) + '</p>';
+			html += '<p class="simEffectText">' + this.displayText(WIND.events[this.simEvent].effects[0].text) + '</p>';
 			html += '<button onclick="WE.runEvent();">Run Event</button>';
 			break;
 			
@@ -1010,6 +1010,34 @@ WINDEDITOR.prototype.displayEvent = function(){
 }
 //----------------------------------------------------------------------------------------------
 //END DISPLAY EVENT
+
+
+
+
+//DISPLAY TEXT
+//checks display text for metrics indicated by * and converts them to the metric values
+//----------------------------------------------------------------------------------------------
+WINDEDITOR.prototype.displayText = function(checkText){
+	//split mText into array separating metric values and text
+	var mTextArray = [];
+	mTextArray = checkText.split("*");
+	var indexes = mTextArray.length;
+	//check each index for metric
+	//replace the metrics with their values
+	var numMetrics = WIND.Player.metrics.length;
+	for(var i=0;i<indexes;i++){
+		for(var m=0;m<numMetrics;m++){
+			if(mTextArray[i] == WIND.Player.metrics[m].name){
+				mTextArray[i] = WIND.Player.metrics[m].value;
+			}			
+		}
+	}
+	var mTextString = mTextArray.join(" ");
+	return mTextString;
+}
+//----------------------------------------------------------------------------------------------
+//END DISPLAY TEXT
+
 
 
 
@@ -1735,7 +1763,7 @@ WINDEDITOR.prototype.fillWithTypes = function(){
 	var html = '';
 	html += '<option value="Metric">Metric</option>';
 	html += '<option value="Number">Number</option>';
-	html += '<option value="Compound">Compound</option>';
+	/*html += '<option value="Compound">Compound</option>';*/
 	return html;
 }
 //----------------------------------------------------------------------------------------------
@@ -3250,13 +3278,114 @@ WINDEDITOR.prototype.undo = function(){
 //updates the all the GUI after running a WIND event
 //----------------------------------------------------------------------------------------------
 WINDEDITOR.prototype.updateDisplay_postEvent = function(){
+
+	var numMetrics = WIND.Player.metrics.length;
+	var p = {}
+	p.turn = WIND.Player.history.length;
+
+	//check for EXTRAS on the metrics
+	//this updates the value of any metrics with extras
+	for(var m=0;m<numMetrics;m++){
+	
+		//EXTRAS
+		//are there extras with WIND metric
+		if(WIND.Player.metrics[m].extras != undefined){
+		
+			//if using an extra called byTurn, the length of the player's history is used as the counter through the extra array
+			if(WIND.Player.metrics[m].extras.byTurn != undefined && WIND.Player.metrics[m].extras.byTurn.length > 0){
+	
+				var lengthOfByTurn = WIND.Player.metrics[m].extras.byTurn.length;
+		
+				//if there is not enough values in the byTurn
+				if(lengthOfByTurn <= p.turn){
+		
+					//is a loop set
+					if(WIND.Player.metrics[m].extras.loop != undefined && WIND.Player.metrics[m].extras.loop == true){
+			
+						//loop back around to get value
+						var turnValue = p.turn % lengthOfByTurn;
+						WIND.Player.metrics[m].value = Number(WIND.Player.metrics[m].extras.byTurn[turnValue]);
+				
+					//no loop has been declared	
+					}else{
+		
+						//use the last value in the byTurn
+						WIND.Player.metrics[m].value = Number(WIND.Player.metrics[m].extras.byTurn[lengthOfByTurn-1]);
+			
+					}
+			
+				//the extra array is long enough
+				}else{
+				
+					//use the length of the history as the counter
+					WIND.Player.metrics[m].value = Number(WIND.Player.metrics[m].extras.byTurn[p.turn]);
+				}
+		
+		
+			//if using another metric as the counter through the extra array
+			}else{
+			
+				var mIndexes = [];
+				//is there an extra property the same name as a metric
+				for (var key in WIND.Player.metrics[m].extras) {
+				
+					//search the metrics, and store the indexes
+					for(var em=0;em<numMetrics;em++){
+						if(key == WIND.Player.metrics[em].name){
+							mIndexes.push(em);
+						}
+					}
+				}
+						
+						
+				//for each extra that is a metric
+				var numMetricExtras = mIndexes.length;
+				for(var em=0;em<numMetricExtras;em++){
+			
+					//use the stored metric indexes to get the name of the metric
+					var metricName = WIND.Player.metrics[mIndexes[em]].name;
+			
+					//get the length of the extra array
+					var lea = WIND.Player.metrics[m].extras[metricName].length;
+				
+					//if there is not enough values in the extra array
+					if(lea <= WIND.Player.metrics[mIndexes[em]].value){
+					
+						//is a loop set
+						if(WIND.Player.metrics[m].extras.loop != undefined && WIND.Player.metrics[m].extras.loop == true){
+					
+							//loop back around to get value
+							var turnValue = WIND.Player.metrics[mIndexes[em]].value % lea;
+							WIND.Player.metrics[m].value = Number(WIND.Player.metrics[m].extras[metricName][turnValue]);
+					
+						//no loop has been declared	
+						}else{
+					
+							//use the last value
+							WIND.Player.metrics[m].value = Number(WIND.Player.metrics[m].extras[metricName][lea-1]);
+			
+						}
+					
+					//the extra array is long enough
+					}else{
+					
+						//use the metric as a counter
+						WIND.Player.metrics[m].value = Number(WIND.Player.metrics[m].extras[metricName][WIND.Player.metrics[mIndexes[em]].value]);
+					}
+				}
+			}
+		}
+	}	
+
+
 	
 	this.updateJSON();
 	
+
 	//update display of Player's metrics
 	html = '';
-	var numMetrics = WIND.Player.metrics.length;
 	for(var i=0;i<numMetrics;i++){
+			
 		html += '<div class="pmListItem"><div class="butName">'+WIND.Player.metrics[i].name+'</div><div class="butValue">'+WIND.Player.metrics[i].value+'</div>';
 		html += '<div class="butView">';
 		html += '<input type="checkbox" id="pm_'+i+'" name="pms" class="windInput" onclick="WE.changePMSview();"/>';
